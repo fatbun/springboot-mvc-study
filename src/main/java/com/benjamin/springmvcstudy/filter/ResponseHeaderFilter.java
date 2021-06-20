@@ -1,16 +1,21 @@
 package com.benjamin.springmvcstudy.filter;
 
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
 import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.UUID;
 
-public class ResponseHeaderFilter implements Filter {
-    @Override
-    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
-        HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
-        httpServletResponse.addHeader("reqid", UUID.randomUUID().toString());
+@Component
+public class ResponseHeaderFilter extends OncePerRequestFilter {
 
-        filterChain.doFilter(servletRequest, httpServletResponse);
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        response.addHeader("reqid", UUID.randomUUID().toString());
+
+        filterChain.doFilter(request, response);
     }
 }
