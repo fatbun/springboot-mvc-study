@@ -11,10 +11,13 @@
     <groupId>com.benjamin</groupId>
     <artifactId>springmvc-study</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+
     <name>springmvc-study</name>
     <description>Demo project for Spring Boot</description>
     <properties>
         <java.version>1.8</java.version>
+        <docker.registry>192.168.68.201/home-dev</docker.registry>
+        <image.version>v2.0.0</image.version>
     </properties>
     <dependencies>
         <dependency>
@@ -34,6 +37,163 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <!--    POM构建        -->
+            <!--            <plugin>-->
+            <!--                <groupId>com.spotify</groupId>-->
+            <!--                <artifactId>docker-maven-plugin</artifactId>-->
+            <!--                <version>1.0.0</version>-->
+            <!--                <configuration>-->
+            <!--                    <imageName>mavendemo-app</imageName>-->
+            <!--                    <baseImage>java</baseImage>-->
+            <!--                    <maintainer>284634275@qq.com</maintainer>-->
+            <!--                    <workdir>/ROOT</workdir>-->
+            <!--                    <cmd>["java", "-version"]</cmd>-->
+            <!--                    <entryPoint>["java", "-jar", "${project.build.finalName}.jar"]</entryPoint>-->
+            <!--                    &lt;!&ndash; 这里是复制 jar 包到 docker 容器指定目录配置 &ndash;&gt;-->
+            <!--                    <resources>-->
+            <!--                        <resource>-->
+            <!--                            <targetPath>/ROOT</targetPath>-->
+            <!--                            <directory>${project.build.directory}</directory>-->
+            <!--                            <include>${project.build.finalName}.jar</include>-->
+            <!--                        </resource>-->
+            <!--                    </resources>-->
+            <!--                </configuration>-->
+            <!--            </plugin>-->
+
+            <!--     Dockerfile 构建       -->
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>1.2.0</version>
+                <configuration>
+                    <!-- 私有仓库配置，需要settings.xml文件配合serverId对应的服务地址 -->
+<!--                    <serverId>${docker.serverId}</serverId>-->
+                    <!-- docker私服地址 -->
+<!--                    <registryUrl>${docker.registry}</registryUrl>-->
+                    <!-- 指定docker server的地址，该配置不需要本机安装docker -->
+<!--                    <dockerHost>${docker.host}</dockerHost>-->
+<!--                    <imageName>${project.name}/${project.artifactId}:${project.version}</imageName>-->
+                    <imageName>${docker.registry}/mavendemo-app:${image.version}</imageName>
+                    <imageTags>
+                        <imageTag>${image.version}</imageTag>
+                    </imageTags>
+                    <!-- docker的构建目录（构建上下文），包含Dockerfile  -->
+                    <dockerDirectory>${basedir}</dockerDirectory>
+<!--                    <resources>-->
+<!--                        <resource>-->
+<!--                            <targetPath>/</targetPath>-->
+<!--                            <directory>${project.build.directory}</directory>-->
+<!--                            <include>${project.build.finalName}.jar</include>-->
+<!--                        </resource>-->
+<!--                    </resources>-->
+                </configuration>
+                <executions>
+                    <!-- package之前清除上一次构建的image -->
+                    <execution>
+                        <id>remove-image</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>removeImage</goal>
+                        </goals>
+                        <configuration>
+                            <imageName>${docker.registry}/mavendemo-app:${image.version}</imageName>
+                            <imageTags>
+                                <imageTag>${image.version}</imageTag>
+                                <imageTag>latest</imageTag>
+                            </imageTags>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>remove-tag-image</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>removeImage</goal>
+                        </goals>
+                        <configuration>
+                            <imageName>${docker.registry}/mavendemo-app:${image.version}</imageName>
+                            <imageTags>
+                                <imageTag>${image.version}</imageTag>
+                                <imageTag>latest</imageTag>
+                            </imageTags>
+                        </configuration>
+                    </execution>
+                    <!-- 将docker:build绑定到package这个phase  -->
+                    <execution>
+                        <id>build-image</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                        <configuration>
+                            <!-- imageName中若不指定tag，则会打上latest -->
+                            <imageName>${docker.registry}/mavendemo-app:${image.version}</imageName>
+                            <!-- 可以使用<imageTags>标签打其他额外的tag -->
+                            <imageTags>
+                                <imageTag>${image.version}</imageTag>
+                                <imageTag>latest</imageTag>
+                            </imageTags>
+                        </configuration>
+                    </execution>
+                    <!-- 将docker:tag绑定到package这个phase  -->
+<!--                    <execution>-->
+<!--                        <id>tag-image</id>-->
+<!--                        <phase>package</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>tag</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            &lt;!&ndash; docker tag IMAGE[:TAG] [REGISTRY_HOST[:REGISTRY_PORT]/]REPOSITORY[:TAG]  &ndash;&gt;-->
+<!--                            &lt;!&ndash; images与IMAGE[:TAG]对应，必须在build阶段已经构建了 &ndash;&gt;-->
+<!--                            <image>mavendemo-app:${project.version}</image>-->
+<!--                            &lt;!&ndash; newName与tag命令的第二个参数对应 &ndash;&gt;-->
+<!--                            <newName>-->
+<!--                                ${docker.registry}/mavendemo-app:${project.version}-->
+<!--                            </newName>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                    <execution>-->
+<!--                        <id>tag-image-latest</id>-->
+<!--                        <phase>deploy</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>tag</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            &lt;!&ndash; docker tag IMAGE[:TAG] [REGISTRY_HOST[:REGISTRY_PORT]/]REPOSITORY[:TAG]  &ndash;&gt;-->
+<!--                            &lt;!&ndash; images与IMAGE[:TAG]对应，必须在build阶段已经构建了 &ndash;&gt;-->
+<!--                            <image>mavendemo-app:${project.version}</image>-->
+<!--                            &lt;!&ndash; newName与tag命令的第二个参数对应 &ndash;&gt;-->
+<!--                            <newName>-->
+<!--&lt;!&ndash;                                ${docker.registry}/${project.name}/${project.artifactId}:latest&ndash;&gt;-->
+<!--                                ${docker.registry}/mavendemo-app:${project.version}-->
+<!--                            </newName>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+                    <!-- 将docker:push绑定到deploy这个phase  -->
+                    <execution>
+                        <id>push-image</id>
+<!--                        <phase>deploy</phase>-->
+                        <phase>package</phase>
+                        <goals>
+                            <goal>push</goal>
+                        </goals>
+                        <configuration>
+                            <imageName>${docker.registry}/mavendemo-app:${image.version}</imageName>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>push-image-latest</id>
+<!--                        <phase>deploy</phase>-->
+                        <phase>package</phase>
+                        <goals>
+                            <goal>push</goal>
+                        </goals>
+                        <configuration>
+                            <imageName>${docker.registry}/mavendemo-app:latest</imageName>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
